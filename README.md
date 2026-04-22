@@ -95,13 +95,11 @@ Claude looks up any Windows device in Intune by user's full name and returns hos
 
 **How it works:**
 - Script lives at a designated path on the Windows machine (Claude-managed, separate from user-deployed tools)
-- First call of the day triggers a device code auth window automatically (USANA Conditional Access enforces 1-day token expiry)
-- Subsequent calls that day use the cached token silently — no prompts
+- Lookups run fully silently — no authentication prompts required
 
 Real ticket example: [GHD-97382](https://usana.atlassian.net/browse/GHD-97382) — BitLocker recovery key request. Hostname retrieved via Intune lookup and included in the ticket automatically.
 
-**Open ticket — in review:**
-`WINOPS-19012` — Requesting a service principal (app-only Graph API credentials) so the token never expires. Currently Brent re-authenticates once per day. Assigned to WinOps for review.
+**WINOPS-19012 — Approved & closed (April 2026):** Service principal granted. Token does not expire — Intune lookups are now fully silent all day, every day.
 
 ---
 
@@ -291,13 +289,11 @@ Claude also learns from corrections. If Brent says "no, that's wrong, do it this
 
 ---
 
-## Open API Approvals (In Progress)
+## API Approvals Status
 
-Three WinOps tickets are open that will meaningfully expand what Claude can do:
-
-| Ticket | Request | Current State | Impact When Approved |
+| Ticket | Request | Status | Result |
 |---|---|---|---|
-| WINOPS-19012 | Intune service principal (Graph API app-only credentials) | Assigned to WinOps for review | Token never expires — Intune lookups fully silent all day |
+| WINOPS-19012 | Intune service principal (Graph API app-only credentials) | **Approved & closed** | Token never expires — Intune lookups fully silent all day |
 | WINOPS-19019 | Local Jamf read-only account | Open | Mac device lookups automated, same as Windows via Intune |
 | WINOPS-19021 | PagerDuty API key | Open | Page teams directly from conversation — no browser, no SSO flow |
 
