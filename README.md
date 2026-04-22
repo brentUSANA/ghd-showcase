@@ -307,7 +307,7 @@ Claude is not a chatbot used to answer trivia questions or generate images. Ever
 
 - A help desk that is critically understaffed for the scale of the environment. There are counterparts in Asia Pacific and Austria who cover phones outside of SLC hours — but the overwhelming majority of hands-on support, escalations, incident management, and tooling is handled by two people in Salt Lake City.
 - Hundreds of users across 20+ countries spanning five continents, many of whom contact SLC directly regardless of time zone.
-- Thorough documentation required at every escalation step — WinOps frequently pushes tickets back, so documentation is the defense.
+- Thorough documentation required at every escalation step
 - Morning call volume from Shipping before most IT staff are even at their desks.
 - P1 incidents that require parallel tracking of multiple Slack threads simultaneously.
 - An environment too large and fast-moving for any static reference document to keep up.
