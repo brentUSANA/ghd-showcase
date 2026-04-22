@@ -156,7 +156,7 @@ APPSUP-53370 — PaaS hotfix release ticket (fixVersion: 2026.04.15.04)
 - Generated the full ITIL Resolution Summary at close: Issue / Root Cause / Resolution / Tickets Referenced / Follow-up — structured and ready to paste into Jira with zero editing
 
 **Why this matters:**
-During a P1 incident, Brent is simultaneously on the phone, on Slack, paging teams, creating tickets, and updating stakeholders. Claude took the Slack monitoring and timeline formatting entirely off his plate.
+During a P1 incident, Brent is simultaneously on the phone, on Slack, paging teams, creating tickets, and updating users. Claude took the Slack monitoring and timeline formatting entirely off his plate.
 
 **Open ticket — watching:**
 `WINOPS-19021` — Requesting a PagerDuty API key so Claude can trigger alerts directly from conversation instead of manually. Once approved: identify incident, page the right team, create the ITIL ticket, and post to the status channel — all in one command.
