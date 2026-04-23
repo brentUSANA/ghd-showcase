@@ -26,8 +26,9 @@ The full scripts and Claude configuration live in a private repository. This pag
 10. [SentinelOne Threat Response](#10-sentinelone-threat-response)
 11. [Teams & Slack Communication](#11-teams--slack-communication-drafting)
 12. [GHD Daily Digest Dashboard](#12-ghd-daily-digest-dashboard)
-13. [Persistent Memory](#13-persistent-memory----learns-and-doesnt-forget)
-14. [Open API Approvals](#open-api-approvals-in-progress)
+13. [GHD End of Shift Digest](#13-ghd-end-of-shift-digest)
+14. [Persistent Memory](#14-persistent-memory----learns-and-doesnt-forget)
+15. [Open API Approvals](#open-api-approvals-in-progress)
 
 ---
 
@@ -282,7 +283,25 @@ This was entirely designed and built by Claude based on Brent describing what he
 
 ---
 
-## 13. Persistent Memory — Learns and Doesn't Forget
+## 13. GHD End of Shift Digest
+
+The morning digest has a companion. At end of shift, one phrase triggers a full shift summary — no bat file, no browser, just a conversational request.
+
+Claude runs three Jira queries in parallel and returns a formatted plain-text digest copied to clipboard:
+
+- **Closed Today** — tickets resolved during the shift, with resolution detail and time closed
+- **Progressed Today** — open tickets updated or moved forward, with current status and last action
+- **New Assignments** — tickets that came in today and are still open (tomorrow morning's queue)
+
+Shift totals at the bottom: `X closed | X progressed | X new in | X total actioned`
+
+**Pending follow-up integration:** Before pulling Jira data, Claude checks memory for any Slack threads flagged for monitoring from previous sessions. Those threads are read and the result surfaces at the top of the digest — so nothing falls through the cracks between shifts.
+
+Real example: A network device ticket had been pending confirmation from the Netops engineer for two days. The EOD digest opened with his reply confirming it was resolved. Ticket was closed in the same session. The memory watch entry was deleted automatically.
+
+---
+
+## 14. Persistent Memory — Learns and Doesn't Forget
 
 Everything described in this document is stored in Claude's persistent memory and survives across sessions. Brent does not re-explain context each morning.
 
