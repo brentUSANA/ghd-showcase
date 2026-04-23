@@ -87,6 +87,14 @@ Claude runs AD queries and performs operations against USANA's domain directly f
 
 The "89-day wall" — a user's `PasswordExpired` flag stays `False` even though they can no longer change their own password. Claude flags this state and recommends an admin reset with must-change rather than directing the user to the self-service portal, because the self-service portal won't work in that state. Real ticket: [GHD-97378](https://usana.atlassian.net/browse/GHD-97378)
 
+**PIM role activation — automated (`/pim` command):**
+
+Many AD, Exchange, and Azure operations require activating a Privileged Identity Management (PIM) role first. Previously this meant navigating the Azure portal manually — select role, set duration, enter justification, submit, wait. Done in a browser every time.
+
+Now: type `/pim` in the terminal. A numbered menu appears listing every available role. Pick one, enter duration and justification. A PowerShell script activates the role via the Microsoft Graph API. No browser, no portal navigation.
+
+Before running an Exchange trace or an Azure device lookup, Claude reminds you to activate the required PIM role — one command in the terminal, then back to the ticket.
+
 ---
 
 ## 3. Intune Device Lookups
