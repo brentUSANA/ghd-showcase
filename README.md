@@ -26,9 +26,10 @@ The full scripts and Claude configuration live in a private repository. This pag
 10. [SentinelOne Threat Response](#10-sentinelone-threat-response)
 11. [Teams & Slack Communication](#11-teams--slack-communication-drafting)
 12. [GHD Daily Digest Dashboard](#12-ghd-daily-digest-dashboard)
-13. [GHD End of Shift Digest](#13-ghd-end-of-shift-digest)
-14. [Persistent Memory](#14-persistent-memory----learns-and-doesnt-forget)
-15. [Open API Approvals](#open-api-approvals-in-progress)
+13. [Morning Intelligence Digest](#13-morning-intelligence-digest)
+14. [GHD End of Shift Digest](#14-ghd-end-of-shift-digest)
+15. [Persistent Memory](#15-persistent-memory----learns-and-doesnt-forget)
+16. [Open API Approvals](#open-api-approvals-in-progress)
 
 ---
 
@@ -283,7 +284,61 @@ This was entirely designed and built by Claude based on Brent describing what he
 
 ---
 
-## 13. GHD End of Shift Digest
+## 13. Morning Intelligence Digest
+
+Every morning, one command produces two clipboard-ready outputs that together give a complete picture of the day before a single ticket is touched.
+
+**Output 1 — Main Digest**
+
+A categorized snapshot of the full open ticket queue:
+
+- **Needs Action Today** — new tickets requiring a response
+- **Follow Up Today** — in-progress work with expected movement (hardware returns, pending callbacks)
+- **On Hold** — parked tickets with clear hold reasons
+- **Waiting for Dell Stock** — refresh queue grouped separately so it doesn't pollute the action list
+
+Each section is plain text, clipboard-ready, and safe to paste directly into Teams or a notes app without encoding issues.
+
+**Output 2 — Additional Info Digest**
+
+Immediately after the main digest, Claude runs a second pass on every Needs Action ticket and enriches it with live lookup data — without being asked.
+
+What gets pulled automatically, per ticket type:
+
+- **All tickets:** Intune device lookup by user name — returns hostname, which is the first thing needed to remote in or identify the machine
+- **Printer tickets:** Live query to the print server — returns printer name, IP address, and driver. The hostname, IP, and a diagnostic note all land in the same line so everything needed to resolve the call is in front of you before you pick up the phone
+- **Multi-user requests:** One line per user, hostname aligned, job title abbreviated — readable at a glance
+
+**Output 2 also includes a draft outreach message per ticket** — a ready-to-send Teams message addressed to the right person about their specific issue. These are reviewed and sent manually; nothing is auto-dispatched.
+
+**Example Additional Info entry (printer ticket):**
+
+```
+GHD-XXXXX [New] Jane Smith - Printer Error #740, USSL_3F_PrinterXX
+  Machine: USSLW-XXXXXXXX | IP: 10.1.190.XX | Driver: SHARP UD2 PCL6 | Error 740 = elevation required
+  Teams: "Hi Jane, I saw your ticket about the printer connection error. I can remote in and
+          get that installed for you - let me know when you have a moment."
+```
+
+**Example Additional Info entry (multi-user software request):**
+
+```
+GHD-XXXXX [New] Claude Desktop install request
+  User A (Dir IT PM):  USSLW-XXXXXXXX
+  User B (VP PM):      USSLW-XXXXXXXX
+  Teams: "Hi [User A], I saw your request for the Claude Desktop app. Looking into getting
+          that set up - I will be in touch shortly."
+```
+
+**Why two outputs instead of one:**
+
+The main digest is fast to scan for priorities. The additional info digest is dense with action data. Combining them into one wall of text makes both harder to use. Keeping them separate means the main digest can be shared or referenced, while the additional info digest is a personal action sheet.
+
+The entire workflow — Jira query, Intune lookups, print server query, Teams draft generation, clipboard delivery — runs in one session with no manual steps between them.
+
+---
+
+## 14. GHD End of Shift Digest
 
 The morning digest has a companion. At end of shift, one phrase triggers a full shift summary — no bat file, no browser, just a conversational request.
 
@@ -301,7 +356,7 @@ Real example: A network device ticket had been pending confirmation from the Net
 
 ---
 
-## 14. Persistent Memory — Learns and Doesn't Forget
+## 15. Persistent Memory — Learns and Doesn't Forget
 
 Everything described in this document is stored in Claude's persistent memory and survives across sessions. Brent does not re-explain context each morning.
 
