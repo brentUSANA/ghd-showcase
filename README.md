@@ -292,57 +292,49 @@ Three structured digest outputs bracket and close the workday. Each is a single 
 
 ### Morning Digest
 
-The first output of the day. One command pulls the full open ticket queue from Jira and copies a categorized snapshot straight to clipboard:
+The first output of the day. One command pulls the full open ticket queue from Jira, runs live lookups on every action item, and copies a single categorized snapshot straight to clipboard.
 
-- **Needs Action Today** — new tickets requiring a response
-- **Follow Up Today** — in-progress work with expected movement (hardware returns, pending callbacks)
-- **On Hold** — parked tickets with a clear hold reason noted
-- **Waiting for Dell Stock** — refresh queue grouped separately so it does not dilute the action list
+Sections:
+
+- **Needs Action Today** — new tickets requiring a response, with enriched detail inline
+- **Sara's Queue / Britton's Queue** — their new items at a glance
+- **Pending / On Hold** — parked tickets with a clear hold reason noted
 
 Plain ASCII throughout — no encoding issues when pasting into Teams or Outlook.
 
----
+The **Needs Action Today** section goes beyond a plain ticket list. For every ticket in that section, Claude automatically runs lookups and appends the results inline — no second command, no second output:
 
-### Additional Info Digest
-
-Immediately after the morning digest, Claude runs a second pass on every Needs Action ticket and enriches it with live lookup data — without being asked.
-
-What gets pulled automatically, per ticket type:
-
-- **All tickets:** Intune device lookup by user name — returns hostname, which is the first thing needed to remote in or identify the machine
-- **Printer tickets:** Live query to the print server — returns printer name, IP address, and driver. Hostname, IP, and a diagnostic note land on one line so everything needed to resolve the call is available before picking up the phone
-- **Multi-user requests:** One line per user, hostname and abbreviated title aligned — readable at a glance
-
-Each ticket in the Additional Info digest also includes a ready-to-send Teams outreach message, pre-written for the specific issue. Messages are reviewed and dispatched manually — nothing is auto-sent.
+- **All tickets:** Intune device lookup by user name — hostname on the same line as the ticket, ready to paste into TeamViewer
+- **Printer tickets:** Live query to the print server — printer IP, driver, and a diagnostic note alongside the hostname
+- **Multi-user requests:** One line per user, hostname and abbreviated title aligned
+- **Teams outreach draft:** A ready-to-send message pre-written for the specific issue, directly under the lookup data. Messages are reviewed and dispatched manually — nothing is auto-sent.
 
 **Example — printer ticket:**
 
 Real ticket: [GHD-97514](https://usana.atlassian.net/browse/GHD-97514) — Kate Cecotti, Lead Scientist, couldn't connect to the 3rd floor printer. Claude queried the print server live to pull the IP and driver alongside the Intune hostname lookup.
 
 ```
+NEEDS ACTION TODAY
+------------------
 GHD-97514 [New] Kate Cecotti - Printer Error #740, USSL_3F_Printer23
   Machine: USSLW-hwZqXvT4T | IP: 10.1.190.42 | Driver: SHARP UD2 PCL6 | Error 740 = elevation required
-  Teams: "Hi Kate, just saw your ticket about the printer issue. I can remote in and
-          get that installed for you - just let me know when you have a free moment."
+  Teams: "Hey Kate, just saw your ticket about the printer. Error 740 means it needs an
+          elevated install - I can remote in and get that sorted. Let me know when works."
 ```
 
 **Example — multi-user software request:**
 
-Real ticket: [GHD-97506](https://usana.atlassian.net/browse/GHD-97506) — Rayne Moore requested Claude Desktop; Jaclyn Johnson tagged herself in as a second requestor. Claude resolved both hostnames from a single command.
+Real ticket: [GHD-97506](https://usana.atlassian.net/browse/GHD-97506) — Rayne Moore requested Claude Desktop; Jaclyn Johnson tagged herself in as a second requestor. Later in the same session, Crystal Bird asked to be added too. Claude resolved hostnames, ran an Active Directory group check on Crystal to confirm whether she had the `Azure_Access_Claude_Enterprise` permission group (it was unclear at the time), and surfaced that her manager on record is Rayne Moore — the same person who opened the ticket. Rayne is already in the loop.
 
 ```
-GHD-97506 [New] Claude Desktop install request
-  Rayne Moore (Dir IT PM):  USSLW-ztcDh3O8m
-  Jaclyn Johnson (VP PM):   USSLW-6QCr4eKxD
-  Teams: "Hi Rayne, I saw your request for Claude Desktop. Looking into getting that
-          set up for you and Jaclyn - I will be in touch shortly."
+GHD-97506 [New] Claude Desktop - Rayne Moore, Jaclyn Johnson, Crystal Bird
+  Rayne Moore (Dir IT PM):    USSLW-ztcDh3O8m
+  Jaclyn Johnson (VP PM):     USSLW-6QCr4eKxD
+  Crystal Bird (Mgr IT PM):  No Intune device - awaiting TeamViewer ID (Teams sent)
+  Teams: drafted for all three
 ```
 
-**Why two outputs instead of one:**
-
-The morning digest is fast to scan for priorities and safe to share. The additional info digest is dense with action data and personal. Keeping them separate means neither is cluttered by the other. Both land on the clipboard automatically and in sequence — morning digest first, additional info second — ready to paste the moment each appears.
-
-The full workflow — Jira query, Intune lookups, print server query, Teams draft generation, two clipboard deliveries — runs in one session with no manual steps between them.
+The full workflow — Jira query, Intune lookups, print server query, Teams draft generation — runs in one session and lands on the clipboard in a single paste-ready output.
 
 ---
 
