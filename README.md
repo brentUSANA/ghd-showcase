@@ -286,20 +286,20 @@ This was entirely designed and built by Claude based on Brent describing what he
 
 ## 13. GHD Digests
 
-Three structured digest outputs bracket and close the workday. Each is a single command — or a single phrase — that produces clipboard-ready plain text with no manual aggregation.
+Three structured digest outputs bracket and close the workday. Each is a single command — or a single phrase — and every output lands directly on the Windows clipboard automatically. No selecting, no copying. The moment Claude finishes generating a digest, it is ready to paste — into Teams, a ticket, an email, or a notes app — with no extra steps.
 
 ---
 
 ### Morning Digest
 
-The first output of the day. One command pulls the full open ticket queue from Jira and returns a categorized snapshot:
+The first output of the day. One command pulls the full open ticket queue from Jira and copies a categorized snapshot straight to clipboard:
 
 - **Needs Action Today** — new tickets requiring a response
 - **Follow Up Today** — in-progress work with expected movement (hardware returns, pending callbacks)
 - **On Hold** — parked tickets with a clear hold reason noted
 - **Waiting for Dell Stock** — refresh queue grouped separately so it does not dilute the action list
 
-Plain text, clipboard-ready, safe to paste directly into Teams or a notes app without encoding issues.
+Plain ASCII throughout — no encoding issues when pasting into Teams or Outlook.
 
 ---
 
@@ -340,13 +340,15 @@ GHD-97506 [New] Claude Desktop install request
 
 **Why two outputs instead of one:**
 
-The morning digest is fast to scan for priorities and safe to share. The additional info digest is dense with action data and personal. Keeping them separate means neither is cluttered by the other. The full workflow — Jira query, Intune lookups, print server query, Teams draft generation, clipboard delivery — runs in one session with no manual steps.
+The morning digest is fast to scan for priorities and safe to share. The additional info digest is dense with action data and personal. Keeping them separate means neither is cluttered by the other. Both land on the clipboard automatically and in sequence — morning digest first, additional info second — ready to paste the moment each appears.
+
+The full workflow — Jira query, Intune lookups, print server query, Teams draft generation, two clipboard deliveries — runs in one session with no manual steps between them.
 
 ---
 
 ### End of Shift Digest
 
-At the end of the day, one phrase triggers a full shift summary. Claude runs three Jira queries in parallel and returns a formatted plain-text digest copied to clipboard:
+At the end of the day, one phrase triggers a full shift summary. Claude runs three Jira queries in parallel and copies a formatted plain-text digest straight to clipboard:
 
 - **Closed Today** — tickets resolved during the shift, with resolution detail and time closed
 - **Progressed Today** — open tickets updated or moved forward, with current status and last action
