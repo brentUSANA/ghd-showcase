@@ -26,10 +26,9 @@ The full scripts and Claude configuration live in a private repository. This pag
 10. [SentinelOne Threat Response](#10-sentinelone-threat-response)
 11. [Teams & Slack Communication](#11-teams--slack-communication-drafting)
 12. [GHD Daily Digest Dashboard](#12-ghd-daily-digest-dashboard)
-13. [Morning Intelligence Digest](#13-morning-intelligence-digest)
-14. [GHD End of Shift Digest](#14-ghd-end-of-shift-digest)
-15. [Persistent Memory](#15-persistent-memory----learns-and-doesnt-forget)
-16. [Open API Approvals](#open-api-approvals-in-progress)
+13. [GHD Digests](#13-ghd-digests)
+14. [Persistent Memory](#14-persistent-memory----learns-and-doesnt-forget)
+15. [Open API Approvals](#open-api-approvals-in-progress)
 
 ---
 
@@ -284,79 +283,79 @@ This was entirely designed and built by Claude based on Brent describing what he
 
 ---
 
-## 13. Morning Intelligence Digest
+## 13. GHD Digests
 
-Every morning, one command produces two clipboard-ready outputs that together give a complete picture of the day before a single ticket is touched.
+Three structured digest outputs bracket and close the workday. Each is a single command — or a single phrase — that produces clipboard-ready plain text with no manual aggregation.
 
-**Output 1 — Main Digest**
+---
 
-A categorized snapshot of the full open ticket queue:
+### Morning Digest
+
+The first output of the day. One command pulls the full open ticket queue from Jira and returns a categorized snapshot:
 
 - **Needs Action Today** — new tickets requiring a response
 - **Follow Up Today** — in-progress work with expected movement (hardware returns, pending callbacks)
-- **On Hold** — parked tickets with clear hold reasons
-- **Waiting for Dell Stock** — refresh queue grouped separately so it doesn't pollute the action list
+- **On Hold** — parked tickets with a clear hold reason noted
+- **Waiting for Dell Stock** — refresh queue grouped separately so it does not dilute the action list
 
-Each section is plain text, clipboard-ready, and safe to paste directly into Teams or a notes app without encoding issues.
+Plain text, clipboard-ready, safe to paste directly into Teams or a notes app without encoding issues.
 
-**Output 2 — Additional Info Digest**
+---
 
-Immediately after the main digest, Claude runs a second pass on every Needs Action ticket and enriches it with live lookup data — without being asked.
+### Additional Info Digest
+
+Immediately after the morning digest, Claude runs a second pass on every Needs Action ticket and enriches it with live lookup data — without being asked.
 
 What gets pulled automatically, per ticket type:
 
 - **All tickets:** Intune device lookup by user name — returns hostname, which is the first thing needed to remote in or identify the machine
-- **Printer tickets:** Live query to the print server — returns printer name, IP address, and driver. The hostname, IP, and a diagnostic note all land in the same line so everything needed to resolve the call is in front of you before you pick up the phone
-- **Multi-user requests:** One line per user, hostname aligned, job title abbreviated — readable at a glance
+- **Printer tickets:** Live query to the print server — returns printer name, IP address, and driver. Hostname, IP, and a diagnostic note land on one line so everything needed to resolve the call is available before picking up the phone
+- **Multi-user requests:** One line per user, hostname and abbreviated title aligned — readable at a glance
 
-**Output 2 also includes a draft outreach message per ticket** — a ready-to-send Teams message addressed to the right person about their specific issue. These are reviewed and sent manually; nothing is auto-dispatched.
+Each ticket in the Additional Info digest also includes a ready-to-send Teams outreach message, pre-written for the specific issue. Messages are reviewed and dispatched manually — nothing is auto-sent.
 
-**Example Additional Info entry (printer ticket):**
+**Example — printer ticket:**
 
 ```
 GHD-XXXXX [New] Jane Smith - Printer Error #740, USSL_3F_PrinterXX
   Machine: USSLW-XXXXXXXX | IP: 10.1.190.XX | Driver: SHARP UD2 PCL6 | Error 740 = elevation required
-  Teams: "Hi Jane, I saw your ticket about the printer connection error. I can remote in and
-          get that installed for you - let me know when you have a moment."
+  Teams: "Hi Jane, I saw your ticket about the printer connection error. I can remote
+          in and get that installed for you - just let me know when works."
 ```
 
-**Example Additional Info entry (multi-user software request):**
+**Example — multi-user software request:**
 
 ```
-GHD-XXXXX [New] Claude Desktop install request
+GHD-XXXXX [New] Application install request
   User A (Dir IT PM):  USSLW-XXXXXXXX
   User B (VP PM):      USSLW-XXXXXXXX
-  Teams: "Hi [User A], I saw your request for the Claude Desktop app. Looking into getting
-          that set up - I will be in touch shortly."
+  Teams: "Hi [User A], I saw your install request and am looking into getting that
+          set up - I will be in touch shortly."
 ```
 
 **Why two outputs instead of one:**
 
-The main digest is fast to scan for priorities. The additional info digest is dense with action data. Combining them into one wall of text makes both harder to use. Keeping them separate means the main digest can be shared or referenced, while the additional info digest is a personal action sheet.
-
-The entire workflow — Jira query, Intune lookups, print server query, Teams draft generation, clipboard delivery — runs in one session with no manual steps between them.
+The morning digest is fast to scan for priorities and safe to share. The additional info digest is dense with action data and personal. Keeping them separate means neither is cluttered by the other. The full workflow — Jira query, Intune lookups, print server query, Teams draft generation, clipboard delivery — runs in one session with no manual steps.
 
 ---
 
-## 14. GHD End of Shift Digest
+### End of Shift Digest
 
-The morning digest has a companion. At end of shift, one phrase triggers a full shift summary — no bat file, no browser, just a conversational request.
-
-Claude runs three Jira queries in parallel and returns a formatted plain-text digest copied to clipboard:
+At the end of the day, one phrase triggers a full shift summary. Claude runs three Jira queries in parallel and returns a formatted plain-text digest copied to clipboard:
 
 - **Closed Today** — tickets resolved during the shift, with resolution detail and time closed
 - **Progressed Today** — open tickets updated or moved forward, with current status and last action
-- **New Assignments** — tickets that came in today and are still open (tomorrow morning's queue)
+- **New Assignments** — tickets that arrived today and are still open (the next morning's queue)
 
-Shift totals at the bottom: `X closed | X progressed | X new in | X total actioned`
+Shift totals at the bottom: `X closed | X progressed | X new | X total actioned`
 
-**Pending follow-up integration:** Before pulling Jira data, Claude checks memory for any Slack threads flagged for monitoring from previous sessions. Those threads are read and the result surfaces at the top of the digest — so nothing falls through the cracks between shifts.
+Before pulling Jira data, Claude checks memory for any Slack threads flagged for monitoring from previous sessions. Those threads are read first and any updates surface at the top of the digest — so nothing falls through the cracks between shifts.
 
-Real example: A network device ticket had been pending confirmation from the Netops engineer for two days. The EOD digest opened with his reply confirming it was resolved. Ticket was closed in the same session. The memory watch entry was deleted automatically.
+Real example: A network device ticket had been pending confirmation from a Netops engineer for two days. The EOD digest opened with his reply confirming resolution. The ticket was closed in the same session and the watch entry removed from memory automatically.
 
 ---
 
-## 15. Persistent Memory — Learns and Doesn't Forget
+## 14. Persistent Memory — Learns and Doesn't Forget
 
 Everything described in this document is stored in Claude's persistent memory and survives across sessions. Brent does not re-explain context each morning.
 
