@@ -317,21 +317,25 @@ Each ticket in the Additional Info digest also includes a ready-to-send Teams ou
 
 **Example — printer ticket:**
 
+Real ticket: [GHD-97514](https://usana.atlassian.net/browse/GHD-97514) — Kate Cecotti, Lead Scientist, couldn't connect to the 3rd floor printer. Claude queried the print server live to pull the IP and driver alongside the Intune hostname lookup.
+
 ```
-GHD-XXXXX [New] Jane Smith - Printer Error #740, USSL_3F_PrinterXX
-  Machine: USSLW-XXXXXXXX | IP: 10.1.190.XX | Driver: SHARP UD2 PCL6 | Error 740 = elevation required
-  Teams: "Hi Jane, I saw your ticket about the printer connection error. I can remote
-          in and get that installed for you - just let me know when works."
+GHD-97514 [New] Kate Cecotti - Printer Error #740, USSL_3F_Printer23
+  Machine: USSLW-hwZqXvT4T | IP: 10.1.190.42 | Driver: SHARP UD2 PCL6 | Error 740 = elevation required
+  Teams: "Hi Kate, just saw your ticket about the printer issue. I can remote in and
+          get that installed for you - just let me know when you have a free moment."
 ```
 
 **Example — multi-user software request:**
 
+Real ticket: [GHD-97506](https://usana.atlassian.net/browse/GHD-97506) — Rayne Moore requested Claude Desktop; Jaclyn Johnson tagged herself in as a second requestor. Claude resolved both hostnames from a single command.
+
 ```
-GHD-XXXXX [New] Application install request
-  User A (Dir IT PM):  USSLW-XXXXXXXX
-  User B (VP PM):      USSLW-XXXXXXXX
-  Teams: "Hi [User A], I saw your install request and am looking into getting that
-          set up - I will be in touch shortly."
+GHD-97506 [New] Claude Desktop install request
+  Rayne Moore (Dir IT PM):  USSLW-ztcDh3O8m
+  Jaclyn Johnson (VP PM):   USSLW-6QCr4eKxD
+  Teams: "Hi Rayne, I saw your request for Claude Desktop. Looking into getting that
+          set up for you and Jaclyn - I will be in touch shortly."
 ```
 
 **Why two outputs instead of one:**
