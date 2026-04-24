@@ -97,6 +97,12 @@ Now: type `/pim` in the terminal. A numbered menu appears listing every availabl
 
 Before running an Exchange trace or an Azure device lookup, Claude reminds you to activate the required PIM role — one command in the terminal, then back to the ticket.
 
+**Proactive auth check — morning digest:**
+
+The delegated Graph token used by `/pim` expires overnight. Rather than surfacing a device code prompt mid-interaction — while a user is standing at the desk waiting — Claude runs a silent auth check at the start of every morning digest. If the token is still valid, it moves on silently. If it has expired, it presents the device code URL immediately, before any ticket work begins. The re-auth is done once, at the start of the day, on your schedule — not someone else's.
+
+This was added after a real walk-up incident on April 24 2026 where a BitLocker key request was delayed by an unexpected auth prompt during `/pim` activation.
+
 ---
 
 ## 3. Intune Device Lookups
@@ -293,6 +299,8 @@ Three structured digest outputs bracket and close the workday. Each is a single 
 ### Morning Digest
 
 The first output of the day. One command pulls the full open ticket queue from Jira, runs live lookups on every action item, and copies a single categorized snapshot straight to clipboard.
+
+Before any ticket work begins, Claude runs a silent Microsoft Graph auth check. If the delegated token used for PIM role activation has expired overnight, the device code URL appears at the top of the digest — re-auth happens once, proactively, before the phones start ringing.
 
 Sections:
 
