@@ -47,19 +47,20 @@ Claude creates, closes, and comments on GHD tickets in Jira from plain English �
 
 **Example interactions:**
 
-> *"Create a ticket — caller's Zoom local recordings weren't showing up. I switched them to the Local PC Recording tab and it was resolved."*
+> *"Carolyn Green called in — her Zoom local recordings weren't showing up. I switched her to the Local PC Recording tab in the Zoom app and it was resolved."*
 
-→ Claude creates the ticket, sets Component: Software, Sub-Component: Software - Issues, Channel: Phone Call, FCR: Yes, closes it, and copies the URL to clipboard.
+→ Claude looks up Carolyn in Jira to set her as reporter, creates the ticket, sets Component: Software, Sub-Component: Software - Issues, Channel: Phone Call, FCR: Yes, closes it, and copies the URL to clipboard. One sentence from Brent.
 Real ticket: [GHD-97384](https://usana.atlassian.net/browse/GHD-97384)
 
-> *"Walk-up — user brought their PC in, can't log into Agile PLM."*
+> *"Charlotte Mukayiranga walked up with her PC — can't log into Agile PLM."*
 
-→ Claude sets Component: Software, Channel: Walk Up, knows Agile uses its own credentials (not SSO), and walks through the fix sequence.
+→ Claude looks up Charlotte, sets her as reporter, sets Component: Software, Channel: Walk Up, knows Agile uses its own credentials (not SSO), and walks through the fix sequence: username format first, email-suffix variant if that fails, admin reset as last resort. Cache clearing alone does not fix Agile login failures — learned from this ticket and stored permanently.
 Real ticket: [GHD-97387](https://usana.atlassian.net/browse/GHD-97387)
 
-> *"AD reset ticket for [user] — a colleague in HR called on their behalf."*
+> *"AD reset ticket for Kara Grieb — she can't change her password, says it rejects everything she tries."*
 
-→ Claude creates the ticket with the caller context noted, correct reporter, FCR, closed. One sentence.
+→ Claude looks up Kara in Active Directory: account not locked, `PasswordExpired` shows False, last set 89 days ago. Flags the near-expiry wall — a known state where the flag hasn't flipped yet but the user is already blocked. Recommends admin reset with must-change-at-next-logon rather than directing her to the self-service portal, which won't work in this state. Creates the ticket with account findings documented, FCR, closed.
+Real ticket: [GHD-97378](https://usana.atlassian.net/browse/GHD-97378)
 
 > *"Leave the ticket open — still waiting on user to test."*
 
