@@ -25,7 +25,7 @@ The full scripts and Claude configuration live in a private repository. This pag
 9. [Application Access Provisioning](#9-application-access-provisioning)
 10. [SentinelOne Threat Response](#10-sentinelone-threat-response)
 11. [Teams & Slack Communication](#11-teams--slack-communication-drafting)
-12. [GHD Daily Digest Dashboard](#12-ghd-daily-digest-dashboard)
+12. [Live Ticket Queue Dashboard](#12-live-ticket-queue-dashboard)
 13. [GHD Digests](#13-ghd-digests)
 14. [Persistent Memory](#14-persistent-memory----learns-and-doesnt-forget)
 15. [Open API Approvals](#open-api-approvals-in-progress)
@@ -270,7 +270,7 @@ Claude drafts Teams and Slack messages with trained behavior:
 
 ---
 
-## 12. GHD Daily Digest Dashboard
+## 12. Live Ticket Queue Dashboard
 
 A custom-built visual ticket queue dashboard:
 
