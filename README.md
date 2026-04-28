@@ -16,7 +16,7 @@ The full scripts and Claude configuration live in a private repository. This pag
 
 1. [Jira Ticket Automation](#1-jira-ticket-automation)
 2. [Active Directory Operations](#2-active-directory-operations)
-3. [Intune Device Lookups](#3-intune-device-lookups)
+3. [Intune & Jamf Device Lookups](#3-intune--jamf-device-lookups)
 4. [Printer & Toner Workflow](#4-printer--toner-workflow)
 5. [Incident Management](#5-incident-management--real-time-coordination)
 6. [Email Investigation](#6-email-investigation)
@@ -105,17 +105,24 @@ This was added after a real walk-up incident on April 24 2026 where a BitLocker 
 
 ---
 
-## 3. Intune Device Lookups
+## 3. Intune & Jamf Device Lookups
 
-Claude looks up any Windows device in Intune by user's full name and returns hostname, device model, serial number, OS version, last check-in, and compliance status.
+Claude looks up any device — Windows or Mac — by user's full name and returns hostname, device model, serial number, OS version, last check-in, and management status.
+
+**Lookup order:**
+1. **Intune first** — covers all Windows PCs. Runs silently via a service principal (no auth prompts). Returns hostname, model, serial, OS, last sync, and compliance state.
+2. **Jamf if nothing found** — catches Mac-only users. Authenticates via OAuth client credentials, fetches the full device inventory, filters to the user, then pulls rich detail from the Classic API: friendly model name, chip, RAM, FileVault status, and enrolled date.
 
 **How it works:**
-- Script lives at a designated path on the Windows machine (Claude-managed, separate from user-deployed tools)
-- Lookups run fully silently — no authentication prompts required
+- Both scripts live at a designated path on the Windows machine (Claude-managed, separate from user-deployed tools)
+- Lookups run fully silently — no authentication prompts required for either system
+- Results are cached in memory: once a hostname is learned, future mentions of the same user return it instantly without running any script. If the cached result fails or is stale, a fresh live lookup runs automatically.
 
 Real ticket example: [GHD-97382](https://usana.atlassian.net/browse/GHD-97382) — BitLocker recovery key request. Hostname retrieved via Intune lookup and included in the ticket automatically.
 
-**WINOPS-19012 — Approved & closed (April 2026):** Service principal granted. Token does not expire — Intune lookups are now fully silent all day, every day.
+**WINOPS-19012 — Approved & closed (April 2026):** Intune service principal granted. Token does not expire.
+
+**WINOPS-19019 — Approved & closed (April 2026):** Jamf API client granted. Mac lookups are now fully automated — same experience as Windows.
 
 ---
 
@@ -225,8 +232,7 @@ Claude looks up hardware assets in Lansweeper to find hostname-to-user mapping, 
 - Uses the correct username format for lookups (ignores legacy domain prefix entries)
 - Knows that Jira and AD descriptions never contain hostnames — goes straight to Lansweeper or Intune rather than guessing
 
-**Open ticket — watching:**
-`WINOPS-19019` — Requesting a local read-only Jamf account for Mac device lookups. Right now Mac lookups require opening the Jamf portal manually. Once approved, Claude can query Mac device info the same way it queries Windows devices via Intune.
+**WINOPS-19019 — Approved & closed (April 2026):** Jamf API client granted. Mac device lookups are now fully automated — same experience as Intune for Windows. See section 3.
 
 ---
 
@@ -382,7 +388,7 @@ Claude also learns from corrections. If Brent says "no, that's wrong, do it this
 | Ticket | Request | Status | Result |
 |---|---|---|---|
 | WINOPS-19012 | Intune service principal (Graph API app-only credentials) | **Approved & closed** | Token never expires — Intune lookups fully silent all day |
-| WINOPS-19019 | Local Jamf read-only account | Open | Mac device lookups automated, same as Windows via Intune |
+| WINOPS-19019 | Jamf API client (OAuth client credentials) | **Approved & closed** | Mac device lookups fully automated — same silent experience as Intune |
 | WINOPS-19021 | PagerDuty API key | Open | Page teams directly from conversation — no browser, no SSO flow |
 
 Once WINOPS-19021 is approved: *"Page the network team for this incident"* becomes a single command that fires the PagerDuty alert, creates the ITIL ticket, and posts to the status channel simultaneously.
