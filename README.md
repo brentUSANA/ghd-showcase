@@ -66,6 +66,11 @@ Real ticket: [GHD-97378](https://usana.atlassian.net/browse/GHD-97378)
 
 → Claude creates without FCR, transitions to Waiting for Customer via the proper workflow (New → In Progress → On Hold/To Customer).
 
+> *"Katherine Bates called about fraud on an Amazon account tied to former employee Stefanie Myers' old USANA email. Stefanie needs the password reset email but her account was disabled in 2024. Her manager Josh Sube is also disabled — next up is Stephen Jones."*
+
+→ Claude identified the approval chain required before any action can be taken (former employee email access plus fraud context equals manager approval plus legal or compliance sign-off), structured the ticket as pending rather than actionable, documented the proposed solution (convert the mailbox to shared so Katherine can receive the reset email on Stefanie's behalf), and flagged that no approvals have been obtained yet. The ticket is a clean record of the situation — not a task for GHD to act on independently.
+Real ticket: [GHD-97680](https://usana.atlassian.net/browse/GHD-97680)
+
 **Ticket description standards (trained):**
 - Description = device + symptom + behavior. No "user reported..." narration.
 - Resolution steps go in a separate comment, never the description.
@@ -145,6 +150,16 @@ Shipping calls every morning about printers. This workflow handles it in one sen
 - Driver/config fix → Sub-Component: Software - Issues
 - DHCP printer issues always get "Printer DHCP Reservation" in the title so the network team knows immediately what they're looking at
 - Claude flags any printer IP outside the expected VLAN subnet as a missing DHCP reservation before the ticket is written
+
+**BarTender label printing — Zebra printers:**
+
+Shipping and warehouse staff print labels on Zebra barcode printers using BarTender software. When a Zebra printer stops producing labels, the root cause is almost always a licensing issue — BarTender's connection to the license server has dropped or rotated out.
+
+Claude recognizes the trigger keywords — "bartender," "zebra printer," "barcode printer," "label printer," "won't print" — and treats it as a licensing issue first, every time:
+
+> *"Shipping called — their Zebra barcode printer won't print, something about BarTender."*
+
+→ Claude goes straight to the fix: open BarTender → Help → BarTender Licensing Wizard → add network license server → 10.35.10.149 (LVDC-BRTND01). No diagnostic tree, no guesswork. 30 licenses are available on that server — the issue is never a shortage, always a dropped connection.
 
 ---
 
