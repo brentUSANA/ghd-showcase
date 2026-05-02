@@ -196,8 +196,17 @@ APPSUP-53370 — PaaS hotfix release ticket (fixVersion: 2026.04.15.04)
 **Why this matters:**
 During a P1 incident, Brent is simultaneously on the phone, on Slack, paging teams, creating tickets, and updating users. Claude took the Slack monitoring and timeline formatting entirely off his plate.
 
+**ITIL ticket creation — now live:**
+
+Claude can create ITIL incident tickets programmatically via the Jira REST API — the same way GHD tickets are created, but with the ITIL project's required fields handled automatically: Market selection, Technical Debt flag, priority, and ADF-formatted description.
+
+> *"Jira is down — work items aren't loading. Wei Zhang reported it from China at 7:14pm and I confirmed it myself here at HQ."*
+
+→ Claude discovers that the Jira outage is multi-site, not China-specific, writes a summary that doesn't over-scope to one region, resolves all required ITIL field IDs at runtime (Market, Technical Debt), creates the incident ticket with the correct priority, and copies the URL to clipboard.
+Real ticket: [ITIL-2353](https://usana.atlassian.net/browse/ITIL-2353)
+
 **Open ticket — watching:**
-`WINOPS-19021` — Requesting a PagerDuty API key so Claude can trigger alerts directly from conversation instead of manually. Once approved: identify incident, page the right team, create the ITIL ticket, and post to the status channel — all in one command.
+`WINOPS-19021` — Requesting a PagerDuty API key so Claude can trigger alerts directly from conversation instead of manually. ITIL ticket creation is already live. Once the PagerDuty key is approved: identify incident, page the right team, create the ITIL ticket, and post to the status channel — all in one command.
 
 ---
 
