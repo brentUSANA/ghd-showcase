@@ -21,14 +21,15 @@ The full scripts and Claude configuration live in a private repository. This pag
 5. [Incident Management](#5-incident-management--real-time-coordination)
 6. [Email Investigation](#6-email-investigation)
 7. [Living Knowledge Base](#7-living-knowledge-base)
-8. [Lansweeper Asset Management](#8-lansweeper-asset-management)
-9. [Application Access Provisioning](#9-application-access-provisioning)
-10. [SentinelOne Threat Response](#10-sentinelone-threat-response)
-11. [Teams & Slack Communication](#11-teams--slack-communication-drafting)
-12. [Live Ticket Queue Dashboard](#12-live-ticket-queue-dashboard)
-13. [GHD Digests](#13-ghd-digests)
-14. [Persistent Memory](#14-persistent-memory----learns-and-doesnt-forget)
-15. [Open API Approvals](#open-api-approvals-in-progress)
+8. [Token Efficiency & Cost Management](#8-token-efficiency--cost-management)
+9. [Lansweeper Asset Management](#9-lansweeper-asset-management)
+10. [Application Access Provisioning](#10-application-access-provisioning)
+11. [SentinelOne Threat Response](#11-sentinelone-threat-response)
+12. [Teams & Slack Communication](#12-teams--slack-communication-drafting)
+13. [Live Ticket Queue Dashboard](#13-live-ticket-queue-dashboard)
+14. [GHD Digests](#14-ghd-digests)
+15. [Persistent Memory](#15-persistent-memory----learns-and-doesnt-forget)
+16. [Open API Approvals](#open-api-approvals-in-progress)
 
 ---
 
@@ -248,7 +249,21 @@ Brent doesn't maintain any of this manually. The knowledge base builds itself.
 
 ---
 
-## 8. Lansweeper Asset Management
+## 8. Token Efficiency & Cost Management
+
+Running Claude against a 400+ line environment reference on every session adds up. These are the active measures that keep context lean without losing capability.
+
+**On-call context injection:** A UserPromptSubmit hook watches for phrases like "going on call" and injects the full on-call escalation procedures — phone trees, PagerDuty routing, incident checklists — only for the duration of the on-call window. When the shift ends ("my on call shift is over"), the section unloads and auto-deactivation triggers at 6 AM MT Monday regardless. That section is roughly 9KB; loading it only when it's needed rather than every session is a measurable daily saving.
+
+**Hook model tiering:** Background hooks run on Haiku — the session learning capture that writes new environment details into reference files, and the doc sync check that runs after edits. The main conversation runs on Sonnet. The session learning capture was previously running Sonnet after every single response; moving it to fire once at session close rather than continuously cut the per-session cost of that hook significantly.
+
+**Plugin discipline:** Only GHD-relevant plugins are enabled. Non-IT-work plugins (frontend design tools, code simplifiers, etc.) are disabled to keep the skill listing context load small each session — every enabled plugin contributes to the prompt preamble whether or not it's ever invoked.
+
+**Context trimming:** The access provisioning reference section was cut from 265 lines to 128 by removing redundant login URL callouts and routing notes already captured elsewhere. Nine separate Jira-related memory files were consolidated into two. The goal is one authoritative location per topic, not multiple files with overlapping content.
+
+---
+
+## 9. Lansweeper Asset Management
 
 Claude looks up hardware assets in Lansweeper to find hostname-to-user mapping, purchase dates, warranty status, and device specs.
 
@@ -260,7 +275,7 @@ Claude looks up hardware assets in Lansweeper to find hostname-to-user mapping, 
 
 ---
 
-## 9. Application Access Provisioning
+## 10. Application Access Provisioning
 
 Claude has the full application access matrix for USANA memorized — 50+ applications, including which AD groups to add, which teams to route tickets to, login credential formats, and any multi-step requirements.
 
@@ -282,7 +297,7 @@ Real ticket: [GHD-97086](https://usana.atlassian.net/browse/GHD-97086)
 
 ---
 
-## 10. SentinelOne Threat Response
+## 11. SentinelOne Threat Response
 
 Claude knows the malware detection workflow end-to-end.
 
@@ -296,7 +311,7 @@ Real ticket: [GHD-97386](https://usana.atlassian.net/browse/GHD-97386) — Senti
 
 ---
 
-## 11. Teams & Slack Communication Drafting
+## 12. Teams & Slack Communication Drafting
 
 Claude drafts Teams and Slack messages with trained behavior:
 
@@ -306,7 +321,7 @@ Claude drafts Teams and Slack messages with trained behavior:
 
 ---
 
-## 12. Live Ticket Queue Dashboard
+## 13. Live Ticket Queue Dashboard
 
 A custom-built visual ticket queue dashboard:
 
@@ -320,7 +335,7 @@ This was entirely designed and built by Claude based on Brent describing what he
 
 ---
 
-## 13. GHD Digests
+## 14. GHD Digests
 
 Three structured digest outputs bracket and close the workday. Each is a single command — or a single phrase — and every output lands directly on the Windows clipboard automatically. No selecting, no copying. The moment Claude finishes generating a digest, it is ready to paste — into Teams, a ticket, an email, or a notes app — with no extra steps.
 
@@ -392,7 +407,7 @@ Real example: A network device ticket had been pending confirmation from a Netop
 
 ---
 
-## 14. Persistent Memory — Learns and Doesn't Forget
+## 15. Persistent Memory — Learns and Doesn't Forget
 
 Everything described in this document is stored in Claude's persistent memory and survives across sessions. Brent does not re-explain context each morning.
 
