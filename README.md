@@ -428,6 +428,7 @@ Claude also learns from corrections. If Brent says "no, that's wrong, do it this
 |---|---|---|---|
 | WINOPS-19012 | Intune service principal (Graph API app-only credentials) | **Approved & closed** | Token never expires — Intune lookups fully silent all day |
 | WINOPS-19019 | Jamf API client (OAuth client credentials) | **Approved & closed** | Mac device lookups fully automated — same silent experience as Intune |
+| WINOPS-19062 | BitLocker.Read.All Graph API permission | **Approved & closed** | BitLocker recovery keys retrieved in seconds from plain English — no Entra portal |
 | WINOPS-19021 | PagerDuty API key | Open | Page teams directly from conversation — no browser, no SSO flow |
 
 Once WINOPS-19021 is approved: *"Page the network team for this incident"* becomes a single command that fires the PagerDuty alert, creates the ITIL ticket, and posts to the status channel simultaneously.
