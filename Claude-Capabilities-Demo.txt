@@ -1,0 +1,581 @@
+================================================================================
+  BRENT + CLAUDE: WHAT WE CAN DO TOGETHER
+  GHD Team Capabilities Demo  |  As of May 2026
+================================================================================
+
+This document outlines what Brent has trained Claude to do specifically for
+USANA's Global Help Desk environment. These are not generic AI features -- each
+capability reflects real workflows, real system integrations, and lessons
+learned from real tickets built by Brent.
+
+--------------------------------------------------------------------------------
+  1. JIRA TICKET AUTOMATION  (The Big One)
+--------------------------------------------------------------------------------
+
+Claude can create, close, and comment on GHD tickets in Jira from plain English
+with zero copy-paste into a browser.
+
+WHAT IT DOES AUTOMATICALLY:
+  - Sets the correct Component (Printer, Software, VPN, AD, Cell Phone, etc.)
+    based on keywords in the description
+  - Sets Sub-Component (Hardware, Software - Issues, Software - Install, etc.)
+  - Detects the Channel (Phone Call, Walk Up, Chat, Email, Ticket)
+  - Sets the correct Reporter to the affected user (not Brent but will fall back on Brent of no user located)
+  - Copies the ticket URL to the clipboard the moment it's created
+  - Includes Mac devices via Jamf (WINOPS-19019 closed April 2026 -- now live)
+  - Closes the ticket immediately if resolved (FCR = Yes if applicable, status = Closed)
+  - Posts a separate resolution comment so the description stays clean
+
+EXAMPLE INTERACTIONS:
+  > "Create a ticket -- Carolyn Green called in, her Zoom local recordings
+    weren't showing up. I switched her to the Local PC Recording tab and
+    it was resolved."
+  --> Claude creates GHD-97384, sets Component: Software, Sub-Component:
+      Software - Issues, Channel: Phone Call, FCR: Yes, Reporter: Carolyn Green,
+      closes it, and copies the URL to your clipboard to paste in to browser easily.
+      https://usana.atlassian.net/browse/GHD-97384
+
+  > "Walk-up -- Charlotte Mukayiranga brought her PC in, can't log into Agile PLM."
+  --> Claude sets Component: Software, Sub-Component: Software - Issues,
+      Channel: Walk Up, Reporter: Charlotte Mukayiranga. Knows Agile uses its
+      own credentials (not SSO), walks through the fix sequence.
+      https://usana.atlassian.net/browse/GHD-97387
+
+  > "AD reset ticket for Hatidza -- Brayden in HR called for her."
+  --> Claude creates the ticket with Brayden as the caller context noted,
+      Hatidza as the reporter, FCR, closed. One command.
+
+  > "Leave the ticket open -- still waiting on user to test."
+  --> Claude creates without FCR, transitions to "Waiting for Customer"
+      via proper workflow (New -> In Progress -> On Hold/To Customer).
+
+TICKET DESCRIPTION STANDARDS (TRAINED):
+  - Description = device + symptom + behavior. No "user reported..." narration.
+  - Resolution steps go in a SEPARATE comment, never the description.
+  - No region abbreviations (writes "Mexico region", not "MXMC" or "MXMX")
+  - Hostname always included -- Claude looks it up in Intune before writing
+
+CURRENT LIMITATIONS WAITING ON APPROVAL:
+  - Reporter field requires a Jira user search -- works great when the user
+    exists in Jira. Falls back gracefully to Brent if not found (no bad data).
+
+--------------------------------------------------------------------------------
+  2. ACTIVE DIRECTORY -- LOOKUPS & OPERATIONS
+--------------------------------------------------------------------------------
+
+Claude can run AD queries against USANAINC directly from this terminal using
+Brent's stored admin credentials (brchristensen01 -- DPAPI encrypted, safe).
+
+WHAT IT CAN DO:
+  - Look up any user: account status, last logon, password age, locked status,
+    group memberships, direct vs. nested group membership
+  - Unlock accounts
+  - Reset passwords with "must change at next logon"
+  - Check if a user is in a specific group (including nested lookups)
+  - Spot near-expiry password issues before users hit a wall
+
+EXAMPLE INTERACTIONS:
+  > "Look up Kara Grieb in AD."
+  --> Returns: enabled/disabled, last logon, password last set 89 days ago,
+      PasswordExpired = False, not locked. Claude flags the near-expiry wall
+      and recommends admin reset with must-change rather than SSPR.
+      Real ticket: GHD-97378 -- https://usana.atlassian.net/browse/GHD-97378
+
+  > "Check if CMuka is in the Agile Users group."
+  --> Runs a recursive AD group membership check -- catches nested membership
+      that a simple MemberOf lookup would miss.
+
+  > "Unlock Hatidza's account and reset her password to Welcome1! must change."
+  --> Done. No need to open dsa.msc.
+
+KNOWN PATTERN CLAUDE WATCHES FOR:
+  Near-expiry but PasswordExpired = False (the "89-day wall"). Claude flags
+  this and recommends admin reset with must-change rather than telling the user
+  to use SSPR, because SSPR won't work in that state.
+
+PIM ROLE ACTIVATION -- AUTOMATED (/pim COMMAND):
+  Many AD, Exchange, and Azure operations require activating a PIM role first.
+  Previously this meant: portal.azure.com -> PIM -> select role -> set duration
+  -> justify -> submit -> wait. Done in a browser, done manually, every time.
+
+  Now: type /pim in the Claude Code terminal. A numbered menu appears with every
+  available role (Helpdesk Admin, User Admin, Cloud Device Admin, Exchange Admin,
+  etc.). Pick one, enter duration and justification. The slash command triggers a
+  PowerShell script that activates the role via the Microsoft Graph API.
+  No browser. No portal navigation. Done.
+
+  Auth is handled via device code flow on first use -- token is cached for the
+  session. Works silently for all subsequent activations in the same session.
+
+  PROACTIVE AUTH CHECK -- MORNING DIGEST:
+  The delegated Graph token (used by /pim) expires overnight. To prevent this
+  from surfacing mid-interaction -- e.g., a walk-up user waiting while a device
+  code prompt appears -- Claude runs a Graph auth check at the start of every
+  morning digest. If the token is still valid, it notes "PIM auth OK" and moves
+  on. If it's expired, it immediately triggers the device code login and presents
+  the URL + code at the top of the digest, before any ticket work begins. The
+  script is graph-auth-check.ps1 in the powershell/ folder.
+
+  Real incident: April 24 2026 -- user walked up for a BitLocker key. /pim was
+  invoked mid-interaction and triggered an unexpected device code prompt, delaying
+  the response. Morning pre-check was added the same day to prevent recurrence.
+
+  Real use: Before looking up a device in Azure or doing an Exchange trace, Claude
+  reminds you to activate the required PIM role. One command in the terminal,
+  then back to the ticket.
+
+--------------------------------------------------------------------------------
+  3. INTUNE DEVICE LOOKUPS
+--------------------------------------------------------------------------------
+
+Claude can look up any Windows device in Intune by user's full name and return
+hostname, device model, serial number, OS version, last check-in, and
+compliance status.
+
+HOW IT WORKS:
+  - Script lives at C:\CLAUDE\intune-lookup.ps1 (Claude-managed, not Scripts/)
+  - First call of the day triggers a device code auth window automatically
+    (USANA Conditional Access enforces 1-day token expiry)
+  - Subsequent calls that day use the cached token silently -- no prompts
+
+EXAMPLE INTERACTION:
+  > "Look up Camille Shaw's machine."
+  --> Returns: USSLW-UxdxZwID6, Dell Latitude 7440, serial XXXXX,
+      Windows 11 22H2, last sync 2 hours ago, compliant.
+      GHD-97382 (BitLocker key lookup; hostname retrieved this way to include in ticket.)
+      https://usana.atlassian.net/browse/GHD-97382
+
+APPROVED & CLOSED -- WINOPS-19012:
+  Service principal (app-only Graph API credentials) granted. Intune lookups
+  are now fully silent -- no daily re-authentication required. Token does not
+  expire. Lookups run silently all day, every day.
+
+APPROVED & CLOSED -- WINOPS-19019:
+  Jamf OAuth client credentials granted (April 2026). Mac device lookups now
+  fully automated -- same as Windows. jamf-lookup.ps1 queries hostname, model,
+  chip, RAM, FileVault status, and last check-in by user's full name.
+
+APPROVED & CLOSED -- WINOPS-19062:
+  BitLocker.Read.All permission granted (April 2026). Claude can retrieve
+  BitLocker recovery keys for any Windows device directly from the Graph API
+  by looking up the user in AD and querying their Intune devices. No Entra
+  portal required -- key surfaced in seconds from plain English.
+
+--------------------------------------------------------------------------------
+  4. PRINTER / TONER WORKFLOW
+--------------------------------------------------------------------------------
+
+This one is a crowd-pleaser. Shipping calls every morning about printers.
+
+EXAMPLE INTERACTION:
+  > "I just got a call -- Machine ID NPI12345 needs toner."
+  --> Claude looks up NPI12345 in the Les Olson printer registry, identifies
+      the printer model (e.g., HP LaserJet M402n), cross-references the
+      PrinterTranslation mapping to find the correct toner cartridge model,
+      formats a Slack message in the exact "GRAB / For:" format Brent uses,
+      and sends it to Brent's Slack so he can read it off his phone while
+      walking to the toner closet.
+      Then creates the Jira ticket with Component: Printer,
+      Sub-Component: Hardware.
+
+WHY THIS MATTERS:
+  Before this, Brent would take the call, look up the printer model manually,
+  find the toner number in a spreadsheet, write it down, walk to the closet.
+  Now it's one sentence.
+
+ALSO TRAINED:
+  - Physical hardware issue (jammed, broken) -> Sub-Component: Hardware - Printer
+  - Driver/config/software fix -> Sub-Component: Software - Issues
+  - DHCP printer issues always get "Printer DHCP Reservation" in the title
+    so WinOps knows immediately what they're looking at
+  - USSL printer VLAN is 10.1.190.0/24 -- if a printer has an IP outside
+    that range, Claude flags it as missing a DHCP reservation
+
+--------------------------------------------------------------------------------
+  5. INCIDENT MANAGEMENT & REAL-TIME COORDINATION  (The Crown Jewel)
+--------------------------------------------------------------------------------
+
+The April 2026 Cycle 3 / APO Outage is the best example of what Claude can do
+when things go sideways at scale.
+
+THE INCIDENT:
+  Distributors in 20+ countries lost the ability to set their Auto-delivery
+  Purchase Orders (APOs) for Cycle 3. Affected: Mexico, all AP markets (Korea,
+  Philippines, Taiwan, Japan), and more. Root cause: a DEV team cycle filter
+  code change (DEV-81448) that silently removed cycle dates from Basecamp and
+  HUB globally.
+
+THE TICKET CHAIN CLAUDE TRACKED END-TO-END:
+  GHD-97361  -- Guillermo Ochoa (Mexico) reports missing cycle date
+               https://usana.atlassian.net/browse/GHD-97361
+      |
+  PR-109481  -- Problem Resolution opens, scope widens globally
+               https://usana.atlassian.net/browse/PR-109481
+      |
+  ITIL-2345  -- Full incident declared, all teams paged
+               https://usana.atlassian.net/browse/ITIL-2345
+      |
+  DEV-95135  -- Developer hotfix: "Does not properly place APO in Cycle 3 Mexico"
+               https://usana.atlassian.net/browse/DEV-95135
+      |
+  APPSUP-53370 -- PaaS hotfix release ticket, fixVersion: 2026.04.15.04
+               https://usana.atlassian.net/browse/APPSUP-53370
+      |
+  #hotfix-2026-04-15-04-paas-rollback-for-apo-missing-date  (Slack hotfix channel)
+
+WHAT CLAUDE DID DURING THE INCIDENT:
+  - Monitored #status-realtime-prod + the dedicated hotfix channel + a side
+    thread from Ryan Mundt's shop team -- 3 Slack threads simultaneously
+  - Filtered 200+ Slack messages down to ~15 clean ITIL timeline entries,
+    skipping commentary, suggestions, and reactions entirely
+  - Formatted every entry exactly as required for the ITIL ticket:
+    "April 17 2026 19:13pm MT: PagerDuty acknowledged by TJ Abrahamsen"
+  - Tracked the full PaaS hotfix approval chain in sequence:
+      James Gardner (DevOps) creates hotfix branch + PR
+      --> Paul Mefford approves PR
+      --> Bamboo builds to stage (build plan: SC-OR678-2)
+      --> Pauline Johansson validates stage, updates APPSUP ticket
+      --> Jeff Benedict + Mike Salls director approval
+      --> Deploy to prod
+      --> Pauline validates prod
+  - Generated the full ITIL Resolution Summary at close:
+    Issue / Root Cause / Resolution / Tickets Referenced / Follow-up --
+    structured, ready to paste into Jira with zero editing
+
+WHY THIS MATTERS:
+  During a P1 incident Brent is simultaneously on the phone, on Slack,
+  paging teams, creating tickets, and updating stakeholders. Claude took
+  the Slack monitoring and timeline formatting entirely off his plate.
+  One fewer thing to drop when everything is on fire.
+
+OPEN TICKET -- WATCHING:
+  WINOPS-19021 (open since April 2026): Requesting a PagerDuty API key so
+  Claude can trigger PD alerts directly from conversation instead of Brent
+  manually typing "/pd trigger" in Slack. Once approved: identify incident,
+  page the right team, create the ITIL ticket, and post to #status-realtime-prod
+  -- all in one command.
+
+--------------------------------------------------------------------------------
+  6. EMAIL INVESTIGATION (EXCHANGE ONLINE)
+--------------------------------------------------------------------------------
+
+WHAT IT CAN DO:
+  - Trace missing/delayed emails via Get-MessageTraceV2 (EXO PowerShell)
+  - Identify whether an email was lost in Exchange vs. stopped by Avanan
+    (USANA's email security gateway) before it ever hit Exchange
+  - Walk through the investigation pattern: narrow window first, then widen,
+    then broaden keywords, then escalate to WinOps if zero results (= Avanan)
+
+EXAMPLE:
+  > "Sue Crookston says she never got a vacation rental confirmation email."
+      GHD-97353 -- https://usana.atlassian.net/browse/GHD-97353
+  --> Claude runs a message trace, finds zero results across a full-day window
+      with broad keywords, concludes the email never reached Exchange, identifies
+      Avanan as the likely intercept point, and drafts the WinOps escalation
+      note with the right evidence already attached. Confirmed sender-side issue
+      -- email never hit USANA mail servers at all.
+
+KNOWN LIMITATION:
+  EXO PowerShell cannot authenticate from WSL -- Claude generates the command
+  block and Brent pastes it into a Windows PowerShell window. Output comes back
+  to Claude for interpretation. (This is a Microsoft limitation, not Claude's.)
+
+--------------------------------------------------------------------------------
+  7. LIVING KNOWLEDGE BASE -- USANA'S ENVIRONMENT, STUDIED AND SELF-BUILDING
+--------------------------------------------------------------------------------
+
+Claude isn't working from generic IT knowledge. It has studied USANA-specific
+reference material and adds to it automatically every single session.
+
+WHAT WAS INGESTED AND IS ACTIVELY USED:
+
+  Confluence GHD Space (scraped by page ID):
+  - Escalation routing: who gets paged for what, in what order, at what number
+  - Full on-call phone tree with every extension and PagerDuty service name
+  - Procedures available on demand -- "pull up the Renewals procedure" returns
+    the actual steps, not a generic answer
+
+  Printer Translation Spreadsheet (studied in full):
+  - Every USSL printer's Machine ID mapped to its physical model
+  - Every model mapped to its correct toner cartridge number
+  - This is how a Machine ID alone becomes a toner Slack message in seconds
+
+  Stock Closet Inventory (memorized with prices):
+  - Every hardware item GHD keeps on hand with current price
+  - Surfaces automatically the moment a user mentions needing a hardware item --
+    no spreadsheet lookup needed
+
+  Application Access Matrix (50+ apps):
+  - AD groups, ticket routing, login URLs, and credential quirks for every app
+  - Special multi-step requirements that are easy to forget under call volume
+    (e.g., Adobe = add group + update SharePoint tracker + email Sara Hieb)
+
+  USANA Network & Infrastructure:
+  - Key server hostnames, URLs, and internal IP ranges
+  - UNC paths for all major file shares (ussl-fs01, usanadata Isilon, Studios)
+  - AD group naming conventions and the two-tier Isilon access model
+  - Printer VLAN subnet (10.1.190.0/24) -- flags IPs outside this range as a
+    missing DHCP reservation before the ticket is even written
+  - Full escalation phone tree: every team, every extension, every PD service
+
+HOW THE KNOWLEDGE KEEPS GROWING -- AUTOMATICALLY:
+
+  A "Stop hook" runs at the end of every Claude session. It reviews the
+  conversation, identifies any new environment details that came up -- new
+  server names, UNC paths, AD group names, user quirks, ticket patterns,
+  vendor contacts -- and writes them into the appropriate reference file.
+
+  Real examples of auto-captured knowledge:
+  - A ticket revealed the CATO (Toronto) HP printer IPs and hostnames.
+    Stored. Claude knows them next session without being told.
+  - A ticket revealed that the Studios Isilon share requires a separate
+    All_Users prerequisite group before the ReadOnly group works.
+    Stored. Claude catches this automatically on future access requests.
+  - A ticket revealed that Agile PLM cache clearing does NOT fix login failures.
+    Stored as a rule. Claude won't recommend that path again.
+  - The Tableau/Snowflake OAuth incident revealed that all four Tableau hosts
+    need outbound access to galop.connectors.tableau.com on port 443.
+    Stored. Claude knows this for future Tableau connectivity calls.
+
+  Brent doesn't maintain any of this manually. The knowledge base builds itself.
+
+--------------------------------------------------------------------------------
+  8. LANSWEEPER ASSET MANAGEMENT
+--------------------------------------------------------------------------------
+
+Claude can look up hardware assets in Lansweeper to find:
+  - Hostname-to-user mapping
+  - Purchase dates and warranty status
+  - Device model and specs
+
+TRAINED BEHAVIOR:
+  - Always uses firstinitiallastname format (mmoeller, brchristensen)
+  - Ignores legacy USANANT\ domain prefix entries -- only trusts USANAINC\
+  - Knows that Jira/AD descriptions never have hostnames -- goes straight to
+    Lansweeper or Intune rather than guessing
+
+CLOSED -- WINOPS-19019:
+  Jamf read-only OAuth credentials granted (April 2026). Mac device lookups
+  now fully automated via jamf-lookup.ps1 -- same workflow as Intune for Windows.
+
+--------------------------------------------------------------------------------
+  9. APPLICATION ACCESS PROVISIONING
+--------------------------------------------------------------------------------
+
+Claude has memorized the full application access matrix for USANA -- 50+
+applications, including which AD groups to add, which teams to route tickets
+to, and any special notes.
+
+EXAMPLE INTERACTIONS:
+  > "New user needs Tableau access."
+  --> Add Azure_Access_Tableau_Prod + FW_Tableau, then route ticket to BI.
+
+  > "Charlotte Mukayiranga can't log into Agile PLM."
+      GHD-97387 -- https://usana.atlassian.net/browse/GHD-97387
+  --> Claude knows Agile uses its own credentials (NOT SSO), walks through
+      the username format (CMukayiranga), tries @usanainc.com suffix if that
+      fails, then recommends admin reset with must-change. Cache clearing alone
+      does NOT fix Agile login failures -- learned from this exact ticket.
+
+  > "New hire needs Adobe Acrobat Pro."
+  --> Add Azure_Access_AdobeCC_AcrobatPro, add to SharePoint tracker, email
+      Sara Hieb. Claude knows all three steps and won't let you skip them.
+
+  > "Cameron Smith needs access to the Studios Isilon share."
+      GHD-97086 -- https://usana.atlassian.net/browse/GHD-97086
+  --> Add USSL_USANA_Studios_All_Users + Isilon-Usana-Studios-ReadOnly.
+      Claude knows Studios and Creative Services are completely different shares
+      with separate AD groups -- having one does NOT grant the other.
+
+  > "Victor Esquivel called -- nine of his Manufacturing team need Production
+    Share Drive access. He's emailing me the list."
+      GHD-97794 -- https://usana.atlassian.net/browse/GHD-97794
+  --> Claude reads the user list directly from the Jira ticket attachment once
+      Victor emails it in. For each user: looks up their AD profile, confirms
+      Victor is listed as manager, applies USSL_Production_WVC_Shared and
+      USSL_Production_All_Users. Two users had a different manager (Kenneth Smith)
+      -- Claude flagged those, drafted an approval request to Kenneth on the ticket,
+      and transitioned the ticket to "Waiting on Customer" automatically.
+      A full comment documenting every user changed and every group applied was
+      posted to the ticket. Nine users processed with manager verification in
+      under a minute. Zero manual AD console work.
+
+--------------------------------------------------------------------------------
+  10. STOCK CLOSET / HARDWARE PRICING
+--------------------------------------------------------------------------------
+
+Claude has the full GHD hardware inventory memorized with current prices.
+
+EXAMPLE:
+  > "A user needs a new keyboard."
+  --> Claude immediately surfaces the correct item from the closet inventory
+      with its price, no need to go look at a spreadsheet.
+
+This helps when users ask if they'll be charged, or when Brent needs to
+log hardware costs in a ticket quickly.
+
+--------------------------------------------------------------------------------
+  11. SENTINELONE THREAT RESPONSE
+--------------------------------------------------------------------------------
+
+Claude knows the malware detection workflow end-to-end.
+
+WHAT IT CAN DO:
+  - Walk through the triage checklist (Action Status: Failed vs. Succeeded)
+  - Identify when to physically pull a machine vs. remote remediate
+  - Draft the desk note to leave if a machine is pulled without reaching the user
+  - Know that GHD can clear/neutralize detections and reconnect devices, but
+    EXCLUSION RULES require InfoSec (INFOSEC project in Jira)
+  - Track open S1 exclusion requests (e.g., Babu Paritala's zsh false positive
+    on USSLM-TJW7H5 is still pending InfoSec as of April 2026)
+    GHD-97386 -- https://usana.atlassian.net/browse/GHD-97386
+
+--------------------------------------------------------------------------------
+  12. TEAMS & SLACK COMMUNICATION DRAFTING
+--------------------------------------------------------------------------------
+
+Claude drafts Teams and Slack messages for Brent, with trained behavior:
+
+  - No em dashes, no arrow characters -- they render as garbage in Teams
+    (shows as things like ΓÇö). Claude uses plain hyphens and plain text.
+  - Teams messages are personalized -- pulls the specific ticket/issue detail,
+    never uses generic phrasing like "this install" or "the issue."
+  - Multi-step instructions are offered to clipboard (clip.exe) rather than
+    pasted raw, because terminal copy-paste garbles formatting when a user
+    pastes into Teams.
+
+--------------------------------------------------------------------------------
+  13. GHD DAILY DIGEST DASHBOARD
+--------------------------------------------------------------------------------
+
+A custom-built visual ticket queue dashboard that runs locally:
+
+  - Pulls live data from Jira REST API
+  - Shows all open GHD tickets assigned to the team
+  - Highlights low-hanging fruit (tickets that can probably be closed fast)
+  - Launches via ghd-digest.bat on Brent's desktop each morning
+  - Runs a CORS proxy in WSL so the browser can talk to Jira securely
+
+This was entirely designed and coded by Claude based on Brent describing
+what he wanted to see each morning.
+
+--------------------------------------------------------------------------------
+  14. GHD END OF SHIFT DIGEST
+--------------------------------------------------------------------------------
+
+The morning digest has a companion: at the end of the shift Brent says
+"give me my end of day digest" and Claude runs three JQL queries in parallel,
+checks any pending Slack thread watches from memory, and returns a formatted
+plain-text shift summary copied to clipboard.
+
+THREE SECTIONS -- CLEANLY NON-OVERLAPPING:
+
+  CLOSED TODAY
+    Tickets resolved or closed during the shift. Shows the key resolution
+    detail from the last comment and the time-to-resolution.
+    Example from April 23 2026: 15 tickets closed in a single shift.
+
+  PROGRESSED TODAY
+    Open tickets that were updated, commented on, or moved forward during
+    the shift but not yet closed. Shows current status and last action taken.
+
+  NEW ASSIGNMENTS
+    Tickets that came in today and are still open -- the incoming queue for
+    the next morning's digest to pick up.
+
+SHIFT TOTALS:
+  A summary line at the bottom: X closed | X progressed | X new in | X total actioned.
+  "Total actioned" = closed + progressed (new assignments came in, not actioned yet).
+
+PENDING FOLLOW-UP INTEGRATION:
+  Before pulling Jira data, Claude checks memory for any Slack threads flagged
+  for monitoring (e.g., "waiting for Brandon's confirmation on GHD-96998").
+  Those threads are read and the result is surfaced at the top of the digest --
+  so nothing falls through the cracks between sessions.
+
+  Real example from April 23 2026: The Vaisala viewLinc device ticket
+  (GHD-96998) had been pending Brandon Fuller's (Netops) confirmation for two
+  days. The EOD digest opened with: "Brandon replied: I believe its good to go."
+  Ticket was closed in the same session. Memory entry deleted automatically.
+
+--------------------------------------------------------------------------------
+  15. PERSISTENT MEMORY -- LEARNS AND DOESN'T FORGET
+--------------------------------------------------------------------------------
+
+Everything described in this document is stored in Claude's persistent memory
+and survives across sessions. Brent does not re-explain context each morning.
+
+Examples of what Claude remembers without being reminded:
+  - The software engineering team uses Slack, not Teams (confirmed April 2026)
+  - Jabber reinstall tickets = Software component, not Desk Phone
+  - Kara Grieb's GHD-97378 situation -- near-expiry password wall quirk
+  - Every WinOps ticket and their status (19012 closed, 19019 closed, 19021 open)
+  - The Les Olson vendor number (801-486-7431) and when to call them
+  - That the USSL 3rd floor R&D printer is ussl_3F_Printer05, by the elevators
+
+Claude also learns from corrections. If Brent says "no, that's wrong, do it
+this way," Claude saves that as a rule and never makes the same mistake again.
+
+--------------------------------------------------------------------------------
+  OPEN ITEMS -- API APPROVALS WE ARE WATCHING
+--------------------------------------------------------------------------------
+
+One WinOps ticket remains open. Two have been closed:
+
+  WINOPS-19012 -- Intune Service Principal (Graph API app-only credentials) -- CLOSED / GRANTED
+    https://usana.atlassian.net/browse/WINOPS-19012
+    Status: Approved and implemented (April 2026).
+    Result: Token never expires. Intune lookups are now fully silent all day --
+            no daily re-authentication step required.
+
+  WINOPS-19019 -- Local Jamf Read-Only Account -- CLOSED / GRANTED
+    https://usana.atlassian.net/browse/WINOPS-19019
+    Status: Approved and implemented (April 2026).
+    Result: Mac device lookups now fully automated via jamf-lookup.ps1.
+            Queries hostname, model, chip, RAM, FileVault status, last check-in.
+
+  WINOPS-19062 -- BitLocker.Read.All Permission -- CLOSED / GRANTED
+    https://usana.atlassian.net/browse/WINOPS-19062
+    Status: Approved and implemented (April 2026).
+    Result: BitLocker recovery keys retrieved via Graph API in seconds.
+
+  WINOPS-19021 -- PagerDuty API Key
+    https://usana.atlassian.net/browse/WINOPS-19021
+    Current state: PD alerting requires navigating to PagerDuty via the SSO
+                   portal (myapps.microsoft.com) and creating alerts manually
+                   through the web UI -- adds meaningful friction during an
+                   active incident when time is short.
+    Once approved: Claude can trigger PagerDuty alerts directly from conversation
+                   via the API -- no browser, no SSO flow.
+                   "Page the network team for this incident" becomes a one-liner
+                   that fires the page, creates the ITIL ticket, and posts to
+                   #status-realtime-prod simultaneously.
+
+--------------------------------------------------------------------------------
+  WHAT THIS IS NOT
+--------------------------------------------------------------------------------
+
+Claude is not a chatbot Brent uses to ask trivia questions or generate images.
+Every capability described here was built to solve a real GHD problem:
+
+  - A help desk that is critically understaffed for the scale of the environment.
+    There are counterparts in Asia Pacific and Austria who cover phones outside
+    of SLC hours -- but the overwhelming majority of hands-on support, escalations,
+    incident management, and tooling is handled by two people in Salt Lake City.
+  - Hundreds of users across 20+ countries: United States, Canada, Mexico, Colombia,
+    Europe (Germany, Italy, and others), India, Australia, New Zealand, and Asia
+    Pacific markets including Korea, Philippines, Taiwan, and Japan -- many of
+    whom contact SLC directly regardless of time zone
+  - Thorough documentation required at every escalation step
+  - Morning call volume from Shipping before most IT staff are even at their desks
+  - P1 incidents that require parallel tracking of 3+ Slack threads at once
+  - An environment too large and fast-moving for any static reference doc to keep up
+
+Practically speaking: two people, one environment spanning five continents.
+Claude's value here is not novelty. It is speed, accuracy, and institutional memory --
+the things a team this size cannot maintain manually at this volume.
+
+================================================================================
+  END OF DOCUMENT
+  Generated: May 5, 2026  |  brent.christensen@usanainc.com
+================================================================================
