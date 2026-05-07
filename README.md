@@ -78,6 +78,10 @@ Real ticket: [GHD-97680](https://usana.atlassian.net/browse/GHD-97680)
 - Location names written in full — no internal abbreviation codes.
 - Hostname always included — Claude looks it up in Intune before writing the ticket.
 
+**Reporter disambiguation:**
+- If a userID is provided, Jira reporter is resolved by email (`userID@usanainc.com`) — not display name. Prevents substring matches like "Chris" hitting "Christian."
+- If no userID is given and names could be ambiguous (Chris/Christian, Sara/Sarah, common surnames), Claude asks which person is intended before creating the ticket. Wrong-reporter notifications go to real people — a one-second confirmation beats an apology. Learned from a real incident (May 2026).
+
 ---
 
 ## 2. Active Directory Operations
