@@ -149,6 +149,7 @@ Shipping calls every morning about printers. This workflow handles it in one sen
 **Also trained:**
 - Physical hardware issue → Sub-Component: Hardware - Printer
 - Driver/config fix → Sub-Component: Software - Issues
+- Hardware issued from GHD stock (adapters, accessories, peripherals) → Sub-Component: Hardware - New Hardware / Stock. Routing is keyword-aware — "USB-C adapter" and "from stock" resolve to Hardware before a networking keyword like "ethernet" can misfire.
 - DHCP printer issues always get "Printer DHCP Reservation" in the title so the network team knows immediately what they're looking at
 - Claude flags any printer IP outside the expected VLAN subnet as a missing DHCP reservation before the ticket is written
 
@@ -294,6 +295,13 @@ Real ticket: [GHD-97387](https://usana.atlassian.net/browse/GHD-97387)
 > *"User needs access to the Studios file share."*
 → Claude knows this share requires a prerequisite "all users" group in addition to the specific access group — having Creative Services access does NOT grant Studios access. Completely separate shares.
 Real ticket: [GHD-97086](https://usana.atlassian.net/browse/GHD-97086)
+
+> *"Victor Esquivel needs Production Share Drive access for nine members of his Manufacturing team."*
+
+→ Claude looks up each user in Active Directory, confirms the listed manager matches Victor before applying any groups, then adds the two required AD groups to all confirmed users and posts a comment to the ticket documenting every change.
+
+Two users had a different manager listed in Active Directory — Claude flagged them and held before touching their accounts. That turned out to be the more significant outcome: those users are Victor's actual direct reports, but the Active Directory Manager field was wrong. HR confirmed the discrepancy via email and the org structure correction is now in progress. Access provisioned for all users. A data integrity issue surfaced and flagged as a byproduct of automated manager verification running on every user before any group change is made.
+Real ticket: [GHD-97794](https://usana.atlassian.net/browse/GHD-97794) (resolved)
 
 ---
 
