@@ -191,6 +191,55 @@ ALSO TRAINED:
   - USSL printer VLAN is 10.1.190.0/24 -- if a printer has an IP outside
     that range, Claude flags it as missing a DHCP reservation
 
+PACKSLIP BATCH REPRINTING:
+  When Will Call or Shipping needs to reprint AO packslip batches, Claude
+  handles the full lookup-to-print workflow without manual file hunting.
+
+  HOW IT WORKS:
+    1. Opens the correct Weekend Processing spreadsheet automatically -- selects
+       the most recently modified file in the 2026 reports folder on fs01
+    2. Reads the Packslip Detail tab to find the Batch ID for the requested location
+    3. Confirms the corresponding PDF exists in the spool share under the correct
+       location subfolder
+    4. Opens the file for review and presents a plain-English briefing explaining
+       exactly why that is the correct file (spreadsheet source, batch ID, run
+       timestamp, who ran it, packslip count)
+    5. On confirmation: adds the target printer temporarily, prints 2 copies at
+       102% of actual size, then immediately removes the printer mapping to prevent
+       future accidental jobs routing to a remote location
+
+  TWO PRINTER MAPPING PATHS:
+    - Named printer on print server (USSL): maps via \\ussl-print01\PrinterName
+    - IP address only (common for Canada/remote offices): creates a TCP/IP port,
+      maps a temporary printer directly to the IP, tears down both port and printer
+      after the job completes -- no residual mappings left behind
+
+  CONFIRMED LOCATION MAPPINGS:
+    SLC Will Call    -> SLC.WC spool folder -> USSL_1F_Printer72 (SHARP BP-C535WR, 10.1.190.146)
+    Vancouver WC     -> VAN.WC spool folder -> CAVC_1F_Printer series (10.40.8.x)
+    Toronto WC       -> ALB.WC spool folder -> CATO_1F_Printer series (10.10.80.x)
+
+  NOTE ON SPOOL FOLDER NAMES:
+    The subfolder names (SLC.WC, VAN.WC, ALB.WC) do not match the office naming
+    conventions (USSL, CAVC, CATO). Claude identifies the correct folder by
+    cross-referencing recently modified timestamps -- active locations have current
+    dates, dormant ones have not been touched in years. The .WC suffix denotes
+    Will Call; the base folder (e.g. SLC without .WC) is a legacy path no longer
+    in active use.
+
+  ALSO HANDLES:
+    - Jira comment posting with the packslip Excel attached inline to the comment
+      body (not just floating at the bottom of the ticket) via jira_comment.py
+
+  EXAMPLE:
+    > "SLC Will Call needs to reprint their last packslip batch."
+    --> Claude opens the most recent weekend processing report, reads the US Will
+        Call section in the Packslip Detail tab, retrieves Batch ID 35794670-1,
+        confirms 35794670-1.pdf exists in SLC.WC, opens it for review, and outputs
+        a briefing showing the spreadsheet source, run time, operator, and packslip
+        count. On confirmation: adds USSL_1F_Printer72, prints 2 copies at 102%,
+        removes the printer. Complete.
+
 --------------------------------------------------------------------------------
   5. INCIDENT MANAGEMENT & REAL-TIME COORDINATION  (The Crown Jewel)
 --------------------------------------------------------------------------------
